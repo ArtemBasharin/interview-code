@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import store from "./store/store";
+
 import { observer } from "mobx-react-lite";
+import store from "./store/store";
 
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import { grey } from "@mui/material/colors";
 import {
   Accordion,
   AccordionDetails,
@@ -18,7 +18,7 @@ import {
   Slider,
   Typography,
 } from "@mui/material";
-
+import LandscapeTwoToneIcon from "@mui/icons-material/LandscapeTwoTone";
 import {
   ArrowBack,
   InfoOutlined,
@@ -30,7 +30,6 @@ import DirectionsWalkIcon from "@mui/icons-material/DirectionsWalk";
 import RouteIcon from "@mui/icons-material/Route";
 import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import LandscapeTwoToneIcon from "@mui/icons-material/LandscapeTwoTone";
 
 import {
   calculateCalories,
@@ -38,8 +37,8 @@ import {
   formatTime,
   getSpeed,
 } from "./config/functions";
-
 import ElevationChart from "./ElevationChart";
+import { grey } from "@mui/material/colors";
 
 export const Filters: React.FC = observer(() => {
   const props = {
@@ -47,10 +46,10 @@ export const Filters: React.FC = observer(() => {
     marginBottom: "3px",
     fontSize: "13px",
   };
-  const getTrack_kindIcon = (track_id: string) => {
+  const getTrack_kindIcon = (track_id: string | undefined) => {
     const track_kind: string | undefined = store.tracks.find(
       (track) => track.track_id === track_id
-    ).track_kind;
+    )?.track_kind;
 
     switch (track_kind) {
       case "cycle":
@@ -82,7 +81,7 @@ export const Filters: React.FC = observer(() => {
     });
   };
 
-  ///////////////for smooth sliders motion///////////
+  ///////////////only for smooth sliders motion///////////
   const initialLength: number[] = [
     store.filters.lengthRange.from ?? 0,
     store.filters.lengthRange.to ?? 100,
@@ -100,11 +99,11 @@ export const Filters: React.FC = observer(() => {
     store.filters.durationRange.to ?? 60,
   ];
   const [duration, setDuration] = useState<number[]>(initialDuration);
-  ////////////////////////////////////////////////////
 
   const [minDistance, maxDistance] = initialLength;
   const [minElevation, maxElevation] = initialElevation;
   const [minDuration, maxDuration] = initialDuration;
+  ////////////////////////////////////////////////////////
 
   function valuetext(value: number) {
     return `${value} км`;
@@ -219,14 +218,12 @@ export const Filters: React.FC = observer(() => {
       setExpanded(isExpanded ? panel : false);
     };
 
-  const trackList = Array.from(store.displayedTracks).map((track, index) => {
+  const trackList = Array.from(store.filteredTracks).map((track, index) => {
     const onClickHandler = () => {
       store.showTrackDialog(track);
-      // @ts-expect-error CustomGPX interface extends L.GPX not correctly //todo
       store.fitMapScale([track.getBounds()]);
       if (store.isMobile) toggleDrawer();
     };
-
     const iconProps = { fontSize: "14px", ml: "4px", mb: "3px" };
 
     return (
@@ -290,10 +287,7 @@ export const Filters: React.FC = observer(() => {
                   <RouteIcon sx={{ ...iconProps, ml: 0 }} />
                   {`${Math.round(track._info.length / 1000)} км, `}
                   <LandscapeTwoToneIcon sx={iconProps} />
-                  {
-                    // @ts-expect-error CustomGPX interface extends L.GPX not correctly //todo
-                    ` ${Math.round(track.get_elevation_gain())} м,`
-                  }
+                  {` ${Math.round(track.get_elevation_gain())} м,`}
                   <HourglassTopIcon sx={iconProps} />
                   {formatTime(
                     track._info.duration.total === 0
